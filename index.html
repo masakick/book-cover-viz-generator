@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>cover viz — interactive SVG generator</title>
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --panel: #232323;
+    --text: #ddd;
+    --accent: #6cf;
+    --border: #333;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Hiragino Sans", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    background: var(--panel);
+    overflow-y: auto;
+    padding: 16px;
+    border-right: 1px solid var(--border);
+  }
+  #preview {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    background: #0a0a0a;
+  }
+  #preview svg {
+    max-width: 100%;
+    max-height: 100%;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
+  h2 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .group {
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+  }
+  .group:last-child { border-bottom: none; }
+  label.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 6px 0;
+    font-size: 12px;
+  }
+  label.row > span:first-child {
+    flex: 0 0 100px;
+    color: #aaa;
+  }
+  label.row input[type="range"] {
+    flex: 1;
+    margin: 0 8px;
+    accent-color: var(--accent);
+  }
+  label.row .val {
+    width: 40px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  label.toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { opacity: 0.85; }
+  #status {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #888;
+    min-height: 1.2em;
+  }
+  .error {
+    color: #f66;
+    font-size: 12px;
+    padding: 12px;
+    background: #2a1010;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="error" class="error" style="display:none;"></div>
+
+  <div class="group">
+    <h2>Display</h2>
+    <label class="toggle"><input type="checkbox" id="showBackground" checked> 背景画像</label>
+    <label class="toggle"><input type="checkbox" id="showEdges" checked> エッジ</label>
+    <label class="toggle"><input type="checkbox" id="edgeGradient"> エッジをグラデーション化（両端ノード色）</label>
+    <label class="toggle"><input type="checkbox" id="showNodes" checked> ノード</label>
+    <label class="toggle"><input type="checkbox" id="showLabels" checked> ラベル</label>
+  </div>
+
+  <div class="group">
+    <h2>Dots / Chapter</h2>
+    <label class="row"><span>count</span><input type="range" id="dotsPerChapter" min="1" max="49" value="49"><span class="val">49</span></label>
+  </div>
+
+  <div class="group">
+    <h2>Node</h2>
+    <label class="row"><span>radius min</span><input type="range" id="nodeRadiusMin" min="0" max="50" value="2" step="0.5"><span class="val">2</span></label>
+    <label class="row"><span>radius max</span><input type="range" id="nodeRadiusMax" min="5" max="100" value="45" step="0.5"><span class="val">45</span></label>
+    <label class="row"><span>sat min</span><input type="range" id="nodeSatMin" min="0" max="100" value="40"><span class="val">40</span></label>
+    <label class="row"><span>sat max</span><input type="range" id="nodeSatMax" min="0" max="100" value="75"><span class="val">75</span></label>
+    <label class="row"><span>bri min</span><input type="range" id="nodeBriMin" min="0" max="100" value="55"><span class="val">55</span></label>
+    <label class="row"><span>bri max</span><input type="range" id="nodeBriMax" min="0" max="100" value="92"><span class="val">92</span></label>
+    <label class="row"><span>alpha</span><input type="range" id="nodeAlpha" min="0" max="100" value="85"><span class="val">85</span></label>
+  </div>
+
+  <div class="group">
+    <h2>Edge</h2>
+    <label class="row"><span>width min</span><input type="range" id="edgeSwMin" min="0" max="20" value="1" step="0.1"><span class="val">1</span></label>
+    <label class="row"><span>width max</span><input type="range" id="edgeSwMax" min="1" max="50" value="15" step="0.5"><span class="val">15</span></label>
+    <label class="row"><span>bri min</span><input type="range" id="edgeBriMin" min="0" max="100" value="40"><span class="val">40</span></label>
+    <label class="row"><span>bri max</span><input type="range" id="edgeBriMax" min="0" max="100" value="100"><span class="val">100</span></label>
+    <label class="row"><span>alpha</span><input type="range" id="edgeAlpha" min="0" max="100" value="15"><span class="val">15</span></label>
+  </div>
+
+  <div class="group">
+    <h2>Label</h2>
+    <label class="row"><span>size</span><input type="range" id="labelSize" min="4" max="40" value="11" step="0.5"><span class="val">11</span></label>
+    <label class="row"><span>alpha</span><input type="range" id="labelAlpha" min="0" max="100" value="90"><span class="val">90</span></label>
+    <label class="row"><span>offset</span><input type="range" id="labelOffset" min="-50" max="50" value="0"><span class="val">0</span></label>
+  </div>
+
+  <div class="group">
+    <h2>Background</h2>
+    <label class="row"><span>image alpha</span><input type="range" id="bgImageAlpha" min="0" max="100" value="60"><span class="val">60</span></label>
+    <label class="row"><span>bri</span><input type="range" id="bgBri" min="0" max="100" value="8"><span class="val">8</span></label>
+  </div>
+
+  <div class="group">
+    <button id="downloadBtn">Download SVG</button>
+    <div id="status"></div>
+  </div>
+</div>
+
+<div id="preview"></div>
+
+<script>
+// =============================================================
+// 定数
+// =============================================================
+const CANVAS_W = 1920;
+const CANVAS_H = 964;
+
+const CHAPTERS = ["Foreword","Chapter1","Chapter2","Chapter3","Chapter4","Chapter5","Chapter6","Afterword","Appendix"];
+const CHAPTER_HUES = [0, 30, 60, 120, 170, 210, 270, 320, 345];
+
+const FIXED_PARAMS = {
+  EDGE_HUE: 0,
+  EDGE_SAT_MIN: 0,
+  EDGE_SAT_MAX: 0,
+  LABEL_HUE: 0,
+  LABEL_SAT: 0,
+  LABEL_BRI: 95,
+  BG_HUE: 0,
+  BG_SAT: 0,
+  LABEL_FONT: "Hiragino Sans, ヒラギノ角ゴ ProN W3, sans-serif",
+};
+
+// =============================================================
+// ヘルパー
+// =============================================================
+function fmap(v, inMin, inMax, outMin, outMax) {
+  if (inMax - inMin === 0) return outMin;
+  return outMin + (outMax - outMin) * (v - inMin) / (inMax - inMin);
+}
+
+function hsbToRgb(h, s, b) {
+  // h: 0-360, s/b: 0-100
+  s /= 100; b /= 100;
+  const c = b * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = b - c;
+  let r, g, bl;
+  if (h < 60)      { r = c; g = x; bl = 0; }
+  else if (h < 120){ r = x; g = c; bl = 0; }
+  else if (h < 180){ r = 0; g = c; bl = x; }
+  else if (h < 240){ r = 0; g = x; bl = c; }
+  else if (h < 300){ r = x; g = 0; bl = c; }
+  else             { r = c; g = 0; bl = x; }
+  return [
+    Math.round((r + m) * 255),
+    Math.round((g + m) * 255),
+    Math.round((bl + m) * 255),
+  ];
+}
+
+function rgbStr(h, s, b) {
+  const [r, g, bl] = hsbToRgb(h, s, b);
+  return `rgb(${r},${g},${bl})`;
+}
+
+function parseCSV(text) {
+  // 単純な行/カンマ分割。我々のCSVはカンマ・引用符を含まない前提
+  // CRLF / LF / CR（旧Mac、ExtendScript出力）すべてに対応
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // BOM除去
+  const lines = text.trim().split(/\r\n|\r|\n/);
+  const headers = lines[0].split(",");
+  return lines.slice(1).map(line => {
+    const cols = line.split(",");
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = cols[i]);
+    return obj;
+  });
+}
+
+// =============================================================
+// データ読み込み
+// =============================================================
+let tfRows, dotRows, coocRows, bgImageDataUri = null;
+
+async function loadData() {
+  setStatus("Loading data...");
+  try {
+    const [tfText, dotText, coocText] = await Promise.all([
+      fetch("data/tf_by_chapter.csv").then(r => r.text()),
+      fetch("data/dot_positions.csv").then(r => r.text()),
+      fetch("data/cooccurrence.csv").then(r => r.text()),
+    ]);
+    tfRows = parseCSV(tfText);
+    dotRows = parseCSV(dotText);
+    coocRows = parseCSV(coocText);
+
+    // 背景画像をbase64で保持（fetch → blob → dataURL）
+    try {
+      const blob = await fetch("data/visualize_base.png").then(r => r.blob());
+      bgImageDataUri = await new Promise((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = rej;
+        fr.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.warn("Background image not found", e);
+    }
+
+    setStatus(`Loaded: ${dotRows.length} dots, ${coocRows.length} edges`);
+    render();
+  } catch (e) {
+    showError(`データ読み込みに失敗しました。<br>このページはローカルサーバー経由で開く必要があります。<br><br><code>cd cover-viz/sketch_cover_final<br>python3 -m http.server 8000</code><br><br>その後 <code>http://localhost:8000</code> にアクセスしてください。<br><br>${e.message}`);
+  }
+}
+
+function showError(html) {
+  const el = document.getElementById("error");
+  el.innerHTML = html;
+  el.style.display = "block";
+}
+
+function setStatus(msg) {
+  document.getElementById("status").textContent = msg;
+}
+
+// =============================================================
+// パラメータ取得
+// =============================================================
+function getParams() {
+  return {
+    DOTS_PER_CHAPTER: +val("dotsPerChapter"),
+    NODE_RADIUS_MIN: +val("nodeRadiusMin"),
+    NODE_RADIUS_MAX: +val("nodeRadiusMax"),
+    NODE_SAT_MIN:    +val("nodeSatMin"),
+    NODE_SAT_MAX:    +val("nodeSatMax"),
+    NODE_BRI_MIN:    +val("nodeBriMin"),
+    NODE_BRI_MAX:    +val("nodeBriMax"),
+    NODE_ALPHA:      +val("nodeAlpha"),
+    EDGE_SW_MIN:     +val("edgeSwMin"),
+    EDGE_SW_MAX:     +val("edgeSwMax"),
+    EDGE_BRI_MIN:    +val("edgeBriMin"),
+    EDGE_BRI_MAX:    +val("edgeBriMax"),
+    EDGE_ALPHA:      +val("edgeAlpha"),
+    LABEL_TEXT_SIZE: +val("labelSize"),
+    LABEL_ALPHA:     +val("labelAlpha"),
+    LABEL_OFFSET:    +val("labelOffset"),
+    BG_IMAGE_ALPHA:  +val("bgImageAlpha"),
+    BG_BRI:          +val("bgBri"),
+    SHOW_BACKGROUND: document.getElementById("showBackground").checked,
+    SHOW_EDGES:      document.getElementById("showEdges").checked,
+    EDGE_GRADIENT:   document.getElementById("edgeGradient").checked,
+    SHOW_NODES:      document.getElementById("showNodes").checked,
+    SHOW_LABELS:     document.getElementById("showLabels").checked,
+  };
+}
+
+function val(id) { return document.getElementById(id).value; }
+
+// =============================================================
+// SVG生成
+// =============================================================
+function buildSVG(p) {
+  // 各章の単語と頻度
+  const chapterWords = {};
+  const chapterFreqs = {};
+  CHAPTERS.forEach(ch => { chapterWords[ch] = []; chapterFreqs[ch] = []; });
+  for (const row of tfRows) {
+    const ch = row.chapter;
+    if (chapterWords[ch] && chapterWords[ch].length < p.DOTS_PER_CHAPTER) {
+      chapterWords[ch].push(row.word);
+      chapterFreqs[ch].push(parseFloat(row.freq));
+    }
+  }
+  let maxFreq = 0;
+  for (const ch of CHAPTERS) {
+    for (const f of chapterFreqs[ch]) if (f > maxFreq) maxFreq = f;
+  }
+
+  // ノード
+  const nodes = {};
+  CHAPTERS.forEach(ch => { nodes[ch] = {}; });
+  for (const row of dotRows) {
+    const ch = row.chapter;
+    if (!nodes[ch]) continue;
+    const idx = parseInt(row.index, 10);
+    if (idx < 0 || idx >= p.DOTS_PER_CHAPTER) continue;
+    if (idx >= chapterWords[ch].length) continue;
+    nodes[ch][idx] = {
+      x: parseFloat(row.x),
+      y: parseFloat(row.y),
+      word: chapterWords[ch][idx],
+      freq: chapterFreqs[ch][idx],
+    };
+  }
+
+  // SVG構築
+  const out = [];
+  const defs = []; // エッジグラデーション定義
+  out.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ` +
+    `xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" ` +
+    `width="${CANVAS_W}" height="${CANVAS_H}" viewBox="0 0 ${CANVAS_W} ${CANVAS_H}">`
+  );
+  const defsIdx = out.length;
+  out.push(""); // <defs> 用プレースホルダー（後で埋める）
+
+  // Layer 1: background
+  out.push('<g id="background" inkscape:groupmode="layer" inkscape:label="background">');
+  out.push(`<rect width="${CANVAS_W}" height="${CANVAS_H}" fill="${rgbStr(FIXED_PARAMS.BG_HUE, FIXED_PARAMS.BG_SAT, p.BG_BRI)}"/>`);
+  if (p.SHOW_BACKGROUND && bgImageDataUri) {
+    out.push(`<image xlink:href="${bgImageDataUri}" x="0" y="0" width="${CANVAS_W}" height="${CANVAS_H}" opacity="${(p.BG_IMAGE_ALPHA/100).toFixed(3)}"/>`);
+  }
+  out.push('</g>');
+
+  // Layer 2: edges
+  out.push('<g id="edges" inkscape:groupmode="layer" inkscape:label="edges">');
+  if (p.SHOW_EDGES) {
+    const wordIndex = {};
+    CHAPTERS.forEach((ch, ci) => {
+      for (const idx in nodes[ch]) {
+        const n = nodes[ch][idx];
+        if (!wordIndex[n.word]) wordIndex[n.word] = [];
+        wordIndex[n.word].push({ ci, x: n.x, y: n.y, freq: n.freq });
+      }
+    });
+    let maxEdge = 1;
+    for (const r of coocRows) {
+      const c = parseInt(r.count, 10);
+      if (!isNaN(c) && c > maxEdge) maxEdge = c;
+    }
+    let drawnCount = 0;
+    let gradId = 0;
+    const edgeOpacity = (p.EDGE_ALPHA/100).toFixed(3);
+    for (const row of coocRows) {
+      const count = parseInt(row.count, 10);
+      if (isNaN(count)) continue;
+      const w1 = row.word1, w2 = row.word2;
+      const a = wordIndex[w1], b = wordIndex[w2];
+      if (!a || !b) continue;
+      for (const n1 of a) for (const n2 of b) {
+        if (n1.ci === n2.ci) continue;
+        const sw = fmap(count, 1, maxEdge, p.EDGE_SW_MIN, p.EDGE_SW_MAX);
+        let stroke;
+        if (p.EDGE_GRADIENT) {
+          // 両端のノード色（章のhue × そのノードのsat/bri）でグラデーション
+          const sat1 = fmap(n1.freq, 0, maxFreq, p.NODE_SAT_MIN, p.NODE_SAT_MAX);
+          const bri1 = fmap(n1.freq, 0, maxFreq, p.NODE_BRI_MIN, p.NODE_BRI_MAX);
+          const sat2 = fmap(n2.freq, 0, maxFreq, p.NODE_SAT_MIN, p.NODE_SAT_MAX);
+          const bri2 = fmap(n2.freq, 0, maxFreq, p.NODE_BRI_MIN, p.NODE_BRI_MAX);
+          const c1 = rgbStr(CHAPTER_HUES[n1.ci], sat1, bri1);
+          const c2 = rgbStr(CHAPTER_HUES[n2.ci], sat2, bri2);
+          const gid = `eg${gradId++}`;
+          defs.push(`<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${n1.x.toFixed(2)}" y1="${n1.y.toFixed(2)}" x2="${n2.x.toFixed(2)}" y2="${n2.y.toFixed(2)}"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient>`);
+          stroke = `url(#${gid})`;
+        } else {
+          const sat = fmap(count, 1, maxEdge, FIXED_PARAMS.EDGE_SAT_MIN, FIXED_PARAMS.EDGE_SAT_MAX);
+          const bri = fmap(count, 1, maxEdge, p.EDGE_BRI_MIN, p.EDGE_BRI_MAX);
+          stroke = rgbStr(FIXED_PARAMS.EDGE_HUE, sat, bri);
+        }
+        out.push(`<line x1="${n1.x.toFixed(2)}" y1="${n1.y.toFixed(2)}" x2="${n2.x.toFixed(2)}" y2="${n2.y.toFixed(2)}" stroke="${stroke}" stroke-width="${sw.toFixed(2)}" opacity="${edgeOpacity}"/>`);
+        drawnCount++;
+      }
+    }
+    console.log("[edges]", { total: coocRows.length, maxEdge, drawn: drawnCount });
+  }
+  out.push('</g>');
+
+  // Layer 3: nodes
+  out.push('<g id="nodes" inkscape:groupmode="layer" inkscape:label="nodes">');
+  if (p.SHOW_NODES) {
+    CHAPTERS.forEach((ch, ci) => {
+      const hue = CHAPTER_HUES[ci];
+      for (const idx in nodes[ch]) {
+        const n = nodes[ch][idx];
+        const r = fmap(Math.sqrt(n.freq), 0, Math.sqrt(maxFreq), p.NODE_RADIUS_MIN, p.NODE_RADIUS_MAX);
+        const sat = fmap(n.freq, 0, maxFreq, p.NODE_SAT_MIN, p.NODE_SAT_MAX);
+        const bri = fmap(n.freq, 0, maxFreq, p.NODE_BRI_MIN, p.NODE_BRI_MAX);
+        out.push(`<circle cx="${n.x.toFixed(2)}" cy="${n.y.toFixed(2)}" r="${r.toFixed(2)}" fill="${rgbStr(hue, sat, bri)}" opacity="${(p.NODE_ALPHA/100).toFixed(3)}"/>`);
+      }
+    });
+  }
+  out.push('</g>');
+
+  // Layer 4: labels
+  out.push('<g id="labels" inkscape:groupmode="layer" inkscape:label="labels">');
+  if (p.SHOW_LABELS) {
+    const labelColor = rgbStr(FIXED_PARAMS.LABEL_HUE, FIXED_PARAMS.LABEL_SAT, FIXED_PARAMS.LABEL_BRI);
+    const labelOpacity = (p.LABEL_ALPHA/100).toFixed(3);
+    CHAPTERS.forEach(ch => {
+      for (const idx in nodes[ch]) {
+        const n = nodes[ch][idx];
+        const safeWord = String(n.word).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        out.push(`<text x="${n.x.toFixed(2)}" y="${(n.y - p.LABEL_OFFSET).toFixed(2)}" font-family="${FIXED_PARAMS.LABEL_FONT}" font-size="${p.LABEL_TEXT_SIZE}" text-anchor="middle" dominant-baseline="middle" fill="${labelColor}" opacity="${labelOpacity}">${safeWord}</text>`);
+      }
+    });
+  }
+  out.push('</g>');
+
+  out.push('</svg>');
+
+  // <defs>プレースホルダーを埋める（グラデーションがある場合のみ）
+  if (defs.length > 0) {
+    out[defsIdx] = `<defs>${defs.join("")}</defs>`;
+  }
+
+  return out.join("\n");
+}
+
+// =============================================================
+// レンダリング
+// =============================================================
+let currentSVG = "";
+
+function render() {
+  if (!tfRows) return;
+  const p = getParams();
+  currentSVG = buildSVG(p);
+  document.getElementById("preview").innerHTML = currentSVG;
+}
+
+// =============================================================
+// イベントバインド
+// =============================================================
+function bindControls() {
+  document.querySelectorAll('input[type="range"]').forEach(input => {
+    const valSpan = input.parentElement.querySelector(".val");
+    const update = () => {
+      valSpan.textContent = input.value;
+      render();
+    };
+    input.addEventListener("input", update);
+  });
+  document.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.addEventListener("change", render);
+  });
+  document.getElementById("downloadBtn").addEventListener("click", () => {
+    if (!currentSVG) return;
+    const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + currentSVG], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    a.href = url;
+    a.download = `cover_${ts}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setStatus(`Downloaded: ${a.download}`);
+  });
+}
+
+// =============================================================
+// 起動
+// =============================================================
+bindControls();
+loadData();
+</script>
+
+</body>
+</html>
