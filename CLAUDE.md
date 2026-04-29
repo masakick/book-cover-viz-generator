@@ -34,10 +34,20 @@ python3 -m http.server 8000
 
 3つのCSVは2つの暗黙キーで結合される：
 
-- **`(chapter, index)`** — [data/dot_positions.csv](data/dot_positions.csv)（`VISUALIZE` 輪郭上のxy座標）と [data/tf_by_chapter.csv](data/tf_by_chapter.csv)（ランク順の単語）を結合する。dot_positions の `index` は tf_by_chapter の `rank-1` の順序と一致する → 章Xのi番目のドットには、章Xの頻度上位i番目の単語が割り当てられる。
+- **`(chapter, position-order)`** — [data/dot_positions.csv](data/dot_positions.csv)（`VISUALIZE` 輪郭上のxy座標、`index` は path traversal order）と [data/tf_by_chapter.csv](data/tf_by_chapter.csv)（章ごとの上位50名詞）を結合する。`buildSVG()` は **UI で選択された並び順**（ラジオ "Node Order"）に応じて tf_by_chapter の行を `rank` または `appearance` で**明示的に昇順ソート**してから上位 N 個を取り、その i 番目を path 上の i 番目のドット位置に割り当てる。**CSV の物理行順には依存しない**（過去の実装は CSV 順前提だったが、appearance モード追加時に堅牢化済み）。
 - **`(word1, word2)`** — [data/cooccurrence.csv](data/cooccurrence.csv) は、章→ノードマップから組み立てたインメモリの `wordIndex` で解決される。エッジは「**異なる章**にあるノードインスタンス間」のみ描画される（`n1.ci !== n2.ci`）。同一章内ペアはスキップ。したがって共起1行から複数のSVG `<line>` が生成されうる。
 
+`tf_by_chapter.csv` の列：`chapter, rank, word, count, freq, appearance`。`appearance` はその章の本文中で**初めて出現した順番**を表す整数（top-50 by TF に入った単語のみ番号を持ち、値は連続でない）。
+
+ドット位置は `index` 順の生座標そのままではなく、`sampleAlongPath()` で**弧長等間隔**にリサンプリングされる。`Dots / Chapter` を減らしても文字輪郭の冒頭区間に偏らず全体に等間隔配置される。隣接 index 間が `STROKE_BREAK_DIST=80px` を超えるとストローク区切り（"E" の横棒など）とみなして弧長から除外。`index=0` のドットは常に `sampled[0]` （t=0）として保持されるため、UI 上 i 番目に並ぶ単語は常に index=0 のドット位置に**最も近い**サンプル点に置かれる。
+
 ノード半径は `sqrt(freq)` でスケールする（唯一の非線形マッピング）。彩度・明度は `fmap()` による線形マッピング。HSB→RGB は SVG が RGB 文字列を要求するため JS 側で実装（`hsbToRgb`）。
+
+### ラベル描画（renderer 非依存）
+
+`<text>` の `text-anchor` / `dominant-baseline` は Inkscape / Illustrator / ブラウザで解釈差があり書き出した SVG がズレる原因になる。本実装はこれを**使わず**、`measureLabels()` がブラウザ DOM の `getBBox()` で各単語の bbox を実測し、絶対座標で `<text x="..." y="...">` を出力する。同じ単語は 1 度だけ計測してキャッシュ。Label セクションのラジオ（中央揃え／左揃え）は bbox からの tx 計算式を切り替えるだけで、座標方式自体は不変。
+
+注意点：書き出した SVG を別環境で開くときに同じフォント（`Hiragino Sans` 系）が無いとフォールバックフォント metrics で再描画されラベルがズレる。完全な可搬性が必要なら font embed が次の手。
 
 ### 同期が必要な定数
 
