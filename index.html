@@ -272,6 +272,35 @@ function sampleAlongPath(positions, N) {
   return result;
 }
 
+// 各ラベル単語の bbox をブラウザ DOM で実測。renderer 依存の text-anchor /
+// dominant-baseline を使わず、絶対座標で <text> を出力するための前処理。
+function measureLabels(words, fontFamily, fontSize) {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("width", "0");
+  svg.setAttribute("height", "0");
+  svg.style.position = "absolute";
+  svg.style.left = "-9999px";
+  svg.style.visibility = "hidden";
+  document.body.appendChild(svg);
+  const result = new Map();
+  try {
+    for (const w of words) {
+      if (result.has(w)) continue;
+      const t = document.createElementNS(SVG_NS, "text");
+      t.setAttribute("font-family", fontFamily);
+      t.setAttribute("font-size", String(fontSize));
+      t.textContent = w;
+      svg.appendChild(t);
+      const b = t.getBBox();
+      result.set(w, { x: b.x, y: b.y, width: b.width, height: b.height });
+    }
+  } finally {
+    document.body.removeChild(svg);
+  }
+  return result;
+}
+
 function parseCSV(text) {
   // 単純な行/カンマ分割。我々のCSVはカンマ・引用符を含まない前提
   // CRLF / LF / CR（旧Mac、ExtendScript出力）すべてに対応
@@ -503,15 +532,27 @@ function buildSVG(p) {
   out.push('</g>');
 
   // Layer 4: labels
+  // text-anchor / dominant-baseline は renderer 依存のため使わない。各ラベルを
+  // ブラウザで実測し、bbox 中心がノード中心に来る絶対座標で出力する。
   out.push('<g id="labels" inkscape:groupmode="layer" inkscape:label="labels">');
   if (p.SHOW_LABELS) {
     const labelColor = rgbStr(FIXED_PARAMS.LABEL_HUE, FIXED_PARAMS.LABEL_SAT, FIXED_PARAMS.LABEL_BRI);
     const labelOpacity = (p.LABEL_ALPHA/100).toFixed(3);
+    const allWords = [];
+    CHAPTERS.forEach(ch => {
+      for (const idx in nodes[ch]) allWords.push(nodes[ch][idx].word);
+    });
+    const metrics = measureLabels(allWords, FIXED_PARAMS.LABEL_FONT, p.LABEL_TEXT_SIZE);
     CHAPTERS.forEach(ch => {
       for (const idx in nodes[ch]) {
         const n = nodes[ch][idx];
+        const m = metrics.get(n.word);
+        if (!m) continue;
+        const cy = n.y - p.LABEL_OFFSET;
+        const tx = n.x - m.x - m.width / 2;
+        const ty = cy  - m.y - m.height / 2;
         const safeWord = String(n.word).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        out.push(`<text x="${n.x.toFixed(2)}" y="${(n.y - p.LABEL_OFFSET).toFixed(2)}" font-family="${FIXED_PARAMS.LABEL_FONT}" font-size="${p.LABEL_TEXT_SIZE}" text-anchor="middle" dominant-baseline="middle" fill="${labelColor}" opacity="${labelOpacity}">${safeWord}</text>`);
+        out.push(`<text x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" font-family="${FIXED_PARAMS.LABEL_FONT}" font-size="${p.LABEL_TEXT_SIZE}" fill="${labelColor}" opacity="${labelOpacity}">${safeWord}</text>`);
       }
     });
   }
