@@ -228,6 +228,50 @@ function rgbStr(h, s, b) {
   return `rgb(${r},${g},${bl})`;
 }
 
+// 弧長で等間隔サンプリング。隣接点が STROKE_BREAK_DIST より離れていたら
+// ストローク間のジャンプとみなして弧長計算から除外（E の中央横棒のような
+// 不連続をまたいで補間しないため）。
+function sampleAlongPath(positions, N) {
+  const STROKE_BREAK_DIST = 80;
+  if (N <= 0 || positions.length === 0) return [];
+  if (positions.length === 1 || N === 1) {
+    return Array.from({ length: N }, () => ({ x: positions[0].x, y: positions[0].y }));
+  }
+  const segs = [];
+  for (let i = 1; i < positions.length; i++) {
+    const dx = positions[i].x - positions[i-1].x;
+    const dy = positions[i].y - positions[i-1].y;
+    const d = Math.hypot(dx, dy);
+    segs.push({ a: positions[i-1], b: positions[i], len: d, isJump: d > STROKE_BREAK_DIST });
+  }
+  let totalLen = 0;
+  for (const s of segs) if (!s.isJump) totalLen += s.len;
+  if (totalLen === 0) {
+    return Array.from({ length: N }, () => ({ x: positions[0].x, y: positions[0].y }));
+  }
+  const result = [];
+  let segIdx = 0;
+  let segAcc = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i * totalLen / (N - 1);
+    while (segIdx < segs.length) {
+      const s = segs[segIdx];
+      if (s.isJump) { segIdx++; continue; }
+      if (segAcc + s.len >= t || segIdx === segs.length - 1) {
+        const f = s.len === 0 ? 0 : Math.min(1, Math.max(0, (t - segAcc) / s.len));
+        result.push({
+          x: s.a.x + (s.b.x - s.a.x) * f,
+          y: s.a.y + (s.b.y - s.a.y) * f,
+        });
+        break;
+      }
+      segAcc += s.len;
+      segIdx++;
+    }
+  }
+  return result;
+}
+
 function parseCSV(text) {
   // 単純な行/カンマ分割。我々のCSVはカンマ・引用符を含まない前提
   // CRLF / LF / CR（旧Mac、ExtendScript出力）すべてに対応
@@ -342,22 +386,33 @@ function buildSVG(p) {
     for (const f of chapterFreqs[ch]) if (f > maxFreq) maxFreq = f;
   }
 
-  // ノード
-  const nodes = {};
-  CHAPTERS.forEach(ch => { nodes[ch] = {}; });
+  // 章ごとに全ドット位置を index 順の配列で集める
+  const dotsByChapter = {};
+  CHAPTERS.forEach(ch => { dotsByChapter[ch] = []; });
   for (const row of dotRows) {
     const ch = row.chapter;
-    if (!nodes[ch]) continue;
+    if (!dotsByChapter[ch]) continue;
     const idx = parseInt(row.index, 10);
-    if (idx < 0 || idx >= p.DOTS_PER_CHAPTER) continue;
-    if (idx >= chapterWords[ch].length) continue;
-    nodes[ch][idx] = {
-      x: parseFloat(row.x),
-      y: parseFloat(row.y),
-      word: chapterWords[ch][idx],
-      freq: chapterFreqs[ch][idx],
-    };
+    dotsByChapter[ch][idx] = { x: parseFloat(row.x), y: parseFloat(row.y) };
   }
+
+  // 弧長等間隔で N 点をサンプリングして上位 N 単語と紐付け
+  const nodes = {};
+  CHAPTERS.forEach(ch => {
+    nodes[ch] = {};
+    const positions = dotsByChapter[ch].filter(Boolean);
+    if (!positions.length) return;
+    const N = Math.min(p.DOTS_PER_CHAPTER, chapterWords[ch].length);
+    const sampled = sampleAlongPath(positions, N);
+    for (let i = 0; i < sampled.length; i++) {
+      nodes[ch][i] = {
+        x: sampled[i].x,
+        y: sampled[i].y,
+        word: chapterWords[ch][i],
+        freq: chapterFreqs[ch][i],
+      };
+    }
+  });
 
   // SVG構築
   const out = [];
