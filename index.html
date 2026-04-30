@@ -532,18 +532,22 @@ function buildSVG(p) {
   }
   out.push('</g>');
 
-  // Layer 3: nodes
+  // Layer 3: nodes — 章ごとにサブグループ化
   out.push('<g id="nodes" inkscape:groupmode="layer" inkscape:label="nodes">');
   if (p.SHOW_NODES) {
     CHAPTERS.forEach((ch, ci) => {
       const hue = CHAPTER_HUES[ci];
-      for (const idx in nodes[ch]) {
+      const ids = Object.keys(nodes[ch]);
+      if (ids.length === 0) return;
+      out.push(`<g id="nodes_${ch}" inkscape:groupmode="layer" inkscape:label="${ch}">`);
+      for (const idx of ids) {
         const n = nodes[ch][idx];
         const r = fmap(Math.sqrt(n.freq), 0, Math.sqrt(maxFreq), p.NODE_RADIUS_MIN, p.NODE_RADIUS_MAX);
         const sat = fmap(n.freq, 0, maxFreq, p.NODE_SAT_MIN, p.NODE_SAT_MAX);
         const bri = fmap(n.freq, 0, maxFreq, p.NODE_BRI_MIN, p.NODE_BRI_MAX);
         out.push(`<circle cx="${n.x.toFixed(2)}" cy="${n.y.toFixed(2)}" r="${r.toFixed(2)}" fill="${rgbStr(hue, sat, bri)}" opacity="${(p.NODE_ALPHA/100).toFixed(3)}"/>`);
       }
+      out.push('</g>');
     });
   }
   out.push('</g>');
@@ -561,7 +565,10 @@ function buildSVG(p) {
     });
     const metrics = measureLabels(allWords, FIXED_PARAMS.LABEL_FONT, p.LABEL_TEXT_SIZE);
     CHAPTERS.forEach(ch => {
-      for (const idx in nodes[ch]) {
+      const ids = Object.keys(nodes[ch]);
+      if (ids.length === 0) return;
+      out.push(`<g id="labels_${ch}" inkscape:groupmode="layer" inkscape:label="${ch}">`);
+      for (const idx of ids) {
         const n = nodes[ch][idx];
         const m = metrics.get(n.word);
         if (!m) continue;
@@ -571,6 +578,7 @@ function buildSVG(p) {
         const safeWord = String(n.word).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         out.push(`<text x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" font-family="${FIXED_PARAMS.LABEL_FONT}" font-size="${p.LABEL_TEXT_SIZE}" fill="${labelColor}" opacity="${labelOpacity}">${safeWord}</text>`);
       }
+      out.push('</g>');
     });
   }
   out.push('</g>');
