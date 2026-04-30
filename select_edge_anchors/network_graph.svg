@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#fafafa"/>
+  <g id="edge" inkscape:label="edge" inkscape:groupmode="layer">
+    <line id="edge_USA_China" x1="150" y1="130" x2="600" y2="130" stroke="#888" stroke-width="1.5"/>
+    <line id="edge_USA_Japan" x1="150" y1="130" x2="700" y2="90" stroke="#888" stroke-width="1.5"/>
+    <line id="edge_USA_India" x1="150" y1="130" x2="350" y2="480" stroke="#888" stroke-width="1.5"/>
+    <line id="edge_UK_China" x1="250" y1="90" x2="600" y2="130" stroke="#888" stroke-width="1.5"/>
+    <line id="edge_UK_Japan" x1="250" y1="90" x2="700" y2="90" stroke="#888" stroke-width="1.5"/>
+    <line id="edge_UK_Korea" x1="250" y1="90" x2="650" y2="220" stroke="#888" stroke-width="1.5"/>
+    <line id="edge_UK_Nepal" x1="250" y1="90" x2="500" y2="430" stroke="#888" stroke-width="1.5"/>
+    <line id="edge_France_Nepal" x1="200" y1="220" x2="500" y2="430" stroke="#888" stroke-width="1.5"/>
+    <line id="edge_France_Japan" x1="200" y1="220" x2="700" y2="90" stroke="#888" stroke-width="1.5"/>
+    <line id="edge_France_Korea" x1="200" y1="220" x2="650" y2="220" stroke="#888" stroke-width="1.5"/>
+  </g>
+  <g id="node" inkscape:label="node" inkscape:groupmode="layer">
+    <g id="node_groupA" inkscape:label="groupA" inkscape:groupmode="layer">
+      <circle id="node_USA" cx="150" cy="130" r="10" fill="#e63946" stroke="#fff" stroke-width="2"/>
+      <circle id="node_UK" cx="250" cy="90" r="10" fill="#e63946" stroke="#fff" stroke-width="2"/>
+      <circle id="node_France" cx="200" cy="220" r="10" fill="#e63946" stroke="#fff" stroke-width="2"/>
+    </g>
+    <g id="node_groupB" inkscape:label="groupB" inkscape:groupmode="layer">
+      <circle id="node_China" cx="600" cy="130" r="10" fill="#2a9d8f" stroke="#fff" stroke-width="2"/>
+      <circle id="node_Japan" cx="700" cy="90" r="10" fill="#2a9d8f" stroke="#fff" stroke-width="2"/>
+      <circle id="node_Korea" cx="650" cy="220" r="10" fill="#2a9d8f" stroke="#fff" stroke-width="2"/>
+    </g>
+    <g id="node_groupC" inkscape:label="groupC" inkscape:groupmode="layer">
+      <circle id="node_India" cx="350" cy="480" r="10" fill="#f4a261" stroke="#fff" stroke-width="2"/>
+      <circle id="node_Pakistan" cx="450" cy="530" r="10" fill="#f4a261" stroke="#fff" stroke-width="2"/>
+      <circle id="node_Nepal" cx="500" cy="430" r="10" fill="#f4a261" stroke="#fff" stroke-width="2"/>
+    </g>
+  </g>
+  <g id="label" inkscape:label="label" inkscape:groupmode="layer">
+    <g id="label_groupA" inkscape:label="groupA" inkscape:groupmode="layer">
+      <text id="label_USA" x="150" y="114" font-family="sans-serif" font-size="13" fill="#222" text-anchor="middle">アメリカ</text>
+      <text id="label_UK" x="250" y="74" font-family="sans-serif" font-size="13" fill="#222" text-anchor="middle">イギリス</text>
+      <text id="label_France" x="200" y="204" font-family="sans-serif" font-size="13" fill="#222" text-anchor="middle">フランス</text>
+    </g>
+    <g id="label_groupB" inkscape:label="groupB" inkscape:groupmode="layer">
+      <text id="label_China" x="600" y="114" font-family="sans-serif" font-size="13" fill="#222" text-anchor="middle">中国</text>
+      <text id="label_Japan" x="700" y="74" font-family="sans-serif" font-size="13" fill="#222" text-anchor="middle">日本</text>
+      <text id="label_Korea" x="650" y="204" font-family="sans-serif" font-size="13" fill="#222" text-anchor="middle">韓国</text>
+    </g>
+    <g id="label_groupC" inkscape:label="groupC" inkscape:groupmode="layer">
+      <text id="label_India" x="350" y="464" font-family="sans-serif" font-size="13" fill="#222" text-anchor="middle">インド</text>
+      <text id="label_Pakistan" x="450" y="514" font-family="sans-serif" font-size="13" fill="#222" text-anchor="middle">パキスタン</text>
+      <text id="label_Nepal" x="500" y="414" font-family="sans-serif" font-size="13" fill="#222" text-anchor="middle">ネパール</text>
+    </g>
+  </g>
+</svg>

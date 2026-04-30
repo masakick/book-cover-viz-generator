@@ -63,6 +63,16 @@ python3 -m http.server 8000
 
 ## 編集時の注意
 
-- 書き出される SVG は各 `<g>` に Inkscape の `groupmode`/`label` 属性を保持しているため、Inkscape/Illustrator で開くと4レイヤとして分離される。SVG生成をリファクタする場合はこの属性を維持すること。
+- 書き出される SVG は各 `<g>` に Inkscape の `groupmode`/`label` 属性を保持しているため、Inkscape/Illustrator で開くと階層レイヤとして分離される（`background` / `edges` / `nodes` / `labels` の 4 レイヤ、`nodes` と `labels` の下にはさらに章別サブレイヤ）。SVG 生成をリファクタする場合はこの属性を維持すること。
 - キャンバスは固定 1920×964（`visualize_base.png` の寸法と一致）。背景画像を差し替える際もこのアスペクト比を保たないとドット座標が崩れる。
 - ダウンロードファイル名には ISO タイムスタンプを埋め込んでいる。ディスク上で各バリエーションを区別するための仕掛けなので、理由なく変更しない。
+- **不変条件**: 書き出された SVG では、エッジ `<line>` の端点 (`x1,y1` / `x2,y2`) と接続先ノード `<circle>` の中心 (`cx,cy`) が**完全一致**している必要がある（[select_edge_anchors/](select_edge_anchors/) の JSX が座標マッチングで接続関係を再構築するため、TOLERANCE=1.0pt）。現在の `buildSVG()` は両方とも同じ `n.x, n.y` を使うため自動的に成立しているが、将来オフセットや変換を加える場合はこの不変条件を壊さないこと。
+
+## select_edge_anchors/（Illustrator 下流ワークフロー）
+
+書き出した SVG を Illustrator で開いて編集する際の補助ユーティリティ。`select_edge_anchors.jsx` を実行すると、選択中のノード（円）と同じ中心座標を持つアンカーポイント（接続エッジの端点）を自動でダイレクト選択する。「USA を中心に放射するエッジだけまとめて動かす」のような操作を一発で可能にする。
+
+- **本体ツールとの境界**: このディレクトリは Illustrator JSX 専用で、ブラウザ側 `index.html` とは独立。データ依存もなし。
+- **依存している不変条件**: 上記「編集時の注意」の `<line>` 端点 ↔ `<circle>` 中心の座標一致。
+- **互換性目標**: Illustrator v27.x 以降、ES3 互換の JSX。アロー関数や `let`/`const` 等の ES6+ 構文は使わないこと。
+- 詳細・既知の落とし穴・今後の拡張候補は [select_edge_anchors/HANDOVER.md](select_edge_anchors/HANDOVER.md) を参照。
