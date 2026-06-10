@@ -142,7 +142,7 @@
     <h2>Display</h2>
     <label class="toggle"><input type="checkbox" id="showBackground" checked> 背景画像</label>
     <label class="toggle"><input type="checkbox" id="showEdges" checked> エッジ</label>
-    <label class="toggle"><input type="checkbox" id="edgeGradient"> エッジをグラデーション化（両端ノード色）</label>
+    <label class="toggle"><input type="checkbox" id="edgeGradient" checked> エッジをグラデーション化（両端ノード色）</label>
     <label class="toggle"><input type="checkbox" id="showNodes" checked> ノード</label>
     <label class="toggle"><input type="checkbox" id="showLabels" checked> ラベル</label>
   </div>
@@ -154,8 +154,8 @@
 
   <div class="group">
     <h2>Node</h2>
-    <label class="toggle"><input type="radio" name="nodeOrder" value="tf" checked> TF順（頻度順）</label>
-    <label class="toggle"><input type="radio" name="nodeOrder" value="appearance"> 初出順</label>
+    <label class="toggle"><input type="radio" name="nodeOrder" value="tf"> TF順（頻度順）</label>
+    <label class="toggle"><input type="radio" name="nodeOrder" value="appearance" checked> 初出順</label>
     <label class="row"><span>radius min</span><input type="range" id="nodeRadiusMin" min="-40" max="50" value="-20" step="0.5"><span class="val">-20</span></label>
     <label class="row"><span>radius max</span><input type="range" id="nodeRadiusMax" min="5" max="200" value="130" step="0.5"><span class="val">130</span></label>
     <label class="row"><span>sat min</span><input type="range" id="nodeSatMin" min="0" max="100" value="40"><span class="val">40</span></label>
@@ -186,7 +186,7 @@
   <div class="group">
     <h2>Background</h2>
     <label class="row"><span>image alpha</span><input type="range" id="bgImageAlpha" min="0" max="100" value="60"><span class="val">60</span></label>
-    <label class="row"><span>bri</span><input type="range" id="bgBri" min="0" max="100" value="8"><span class="val">8</span></label>
+    <label class="row"><span>bri</span><input type="range" id="bgBri" min="0" max="100" value="0"><span class="val">0</span></label>
   </div>
 
   <div class="group">
