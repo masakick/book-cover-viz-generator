@@ -111,6 +111,7 @@
     border-radius: 4px;
     margin-bottom: 12px;
   }
+  .node { cursor: pointer; }
   #about-link {
     position: fixed;
     top: 12px;
@@ -543,7 +544,7 @@ function buildSVG(p) {
           const bri = fmap(count, 1, maxEdge, p.EDGE_BRI_MIN, p.EDGE_BRI_MAX);
           stroke = rgbStr(FIXED_PARAMS.EDGE_HUE, sat, bri);
         }
-        out.push(`<line x1="${n1.x.toFixed(2)}" y1="${n1.y.toFixed(2)}" x2="${n2.x.toFixed(2)}" y2="${n2.y.toFixed(2)}" stroke="${stroke}" stroke-width="${sw.toFixed(2)}" opacity="${edgeOpacity}"/>`);
+        out.push(`<line x1="${n1.x.toFixed(2)}" y1="${n1.y.toFixed(2)}" x2="${n2.x.toFixed(2)}" y2="${n2.y.toFixed(2)}" stroke="${stroke}" stroke-width="${sw.toFixed(2)}" opacity="${edgeOpacity}" class="edge" data-w1="${w1}" data-w2="${w2}" data-c1="${CHAPTERS[n1.ci]}" data-c2="${CHAPTERS[n2.ci]}"/>`);
         drawnCount++;
       }
     }
@@ -564,7 +565,7 @@ function buildSVG(p) {
         const r = fmap(Math.sqrt(n.freq), 0, Math.sqrt(maxFreq), p.NODE_RADIUS_MIN, p.NODE_RADIUS_MAX);
         const sat = fmap(n.freq, 0, maxFreq, p.NODE_SAT_MIN, p.NODE_SAT_MAX);
         const bri = fmap(n.freq, 0, maxFreq, p.NODE_BRI_MIN, p.NODE_BRI_MAX);
-        out.push(`<circle cx="${n.x.toFixed(2)}" cy="${n.y.toFixed(2)}" r="${r.toFixed(2)}" fill="${rgbStr(hue, sat, bri)}" opacity="${(p.NODE_ALPHA/100).toFixed(3)}"/>`);
+        out.push(`<circle cx="${n.x.toFixed(2)}" cy="${n.y.toFixed(2)}" r="${r.toFixed(2)}" fill="${rgbStr(hue, sat, bri)}" opacity="${(p.NODE_ALPHA/100).toFixed(3)}" class="node" data-word="${n.word}" data-chapter="${ch}" style="cursor:pointer"/>`);
       }
       out.push('</g>');
     });
@@ -575,9 +576,9 @@ function buildSVG(p) {
   // text-anchor / dominant-baseline は renderer 依存のため使わない。各ラベルを
   // ブラウザで実測し、bbox 中心がノード中心に来る絶対座標で出力する。
   out.push('<g id="labels" inkscape:groupmode="layer" inkscape:label="labels">');
-  if (p.SHOW_LABELS) {
+  {
     const labelColor = rgbStr(FIXED_PARAMS.LABEL_HUE, FIXED_PARAMS.LABEL_SAT, FIXED_PARAMS.LABEL_BRI);
-    const labelOpacity = (p.LABEL_ALPHA/100).toFixed(3);
+    const labelOpacity = p.SHOW_LABELS ? (p.LABEL_ALPHA/100).toFixed(3) : "0";
     const allWords = [];
     CHAPTERS.forEach(ch => {
       for (const idx in nodes[ch]) allWords.push(nodes[ch][idx].word);
@@ -595,7 +596,7 @@ function buildSVG(p) {
         const tx = p.LABEL_ALIGN === "start" ? n.x - m.x : n.x - m.x - m.width / 2;
         const ty = cy  - m.y - m.height / 2;
         const safeWord = String(n.word).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        out.push(`<text x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" font-family="${FIXED_PARAMS.LABEL_FONT}" font-size="${p.LABEL_TEXT_SIZE}" fill="${labelColor}" opacity="${labelOpacity}">${safeWord}</text>`);
+        out.push(`<text x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" font-family="${FIXED_PARAMS.LABEL_FONT}" font-size="${p.LABEL_TEXT_SIZE}" fill="${labelColor}" opacity="${labelOpacity}" class="node-label" data-word="${n.word}" data-chapter="${ch}">${safeWord}</text>`);
       }
       out.push('</g>');
     });
@@ -622,6 +623,40 @@ function render() {
   const p = getParams();
   currentSVG = buildSVG(p);
   document.getElementById("preview").innerHTML = currentSVG;
+  attachHoverHandlers();
+}
+
+function attachHoverHandlers() {
+  const preview = document.getElementById("preview");
+  // ノードインスタンスは (word, chapter) で一意。タブは単語に現れないので区切りに使う
+  const nodeKey = (word, chapter) => `${chapter}\t${word}`;
+  preview.querySelectorAll(".node").forEach(circle => {
+    circle.addEventListener("mouseenter", () => {
+      const word = circle.dataset.word;
+      const chapter = circle.dataset.chapter;
+      const connectedKeys = new Set([nodeKey(word, chapter)]);
+      preview.querySelectorAll(".edge").forEach(line => {
+        const d = line.dataset;
+        const atEnd1 = d.w1 === word && d.c1 === chapter;
+        const atEnd2 = d.w2 === word && d.c2 === chapter;
+        line.style.opacity = (atEnd1 || atEnd2) ? "1" : "0.02";
+        if (atEnd1) connectedKeys.add(nodeKey(d.w2, d.c2));
+        if (atEnd2) connectedKeys.add(nodeKey(d.w1, d.c1));
+      });
+      preview.querySelectorAll(".node").forEach(c => {
+        c.style.opacity = connectedKeys.has(nodeKey(c.dataset.word, c.dataset.chapter)) ? "" : "0.08";
+      });
+      preview.querySelectorAll(".node-label").forEach(label => {
+        const connected = connectedKeys.has(nodeKey(label.dataset.word, label.dataset.chapter));
+        label.style.opacity = connected ? "1" : "0";
+      });
+    });
+    circle.addEventListener("mouseleave", () => {
+      preview.querySelectorAll(".edge").forEach(line => { line.style.opacity = ""; });
+      preview.querySelectorAll(".node").forEach(c => { c.style.opacity = ""; });
+      preview.querySelectorAll(".node-label").forEach(label => { label.style.opacity = ""; });
+    });
+  });
 }
 
 // =============================================================
