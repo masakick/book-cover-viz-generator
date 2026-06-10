@@ -14,6 +14,8 @@
 
 **[https://masakick.github.io/book-cover-viz-generator/](https://masakick.github.io/book-cover-viz-generator/)**
 
+[![スクリーンショット](screenshot.png)](https://masakick.github.io/book-cover-viz-generator/)
+
 ### 主な操作方法
 
 1. 各スライダーでノード数・エッジ数・色相・サイズなどを調整する
