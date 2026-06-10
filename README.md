@@ -1,33 +1,25 @@
 # book-cover-viz-generator
 
-書籍の表紙ビジュアルを生成するブラウザツール。
+## 概要
 
-## デモ
+本ツールは山辺真幸が執筆した書籍[『ProcessingとPythonではじめる データビジュアライゼーション入門』](https://www.keio-up.co.jp/np/isbn/9784766431223/)の表紙ビジュアル制作のために開発されました。
+
+本書籍は、ProcessingとPythonを用いてデータビジュアライゼーションの基礎から応用までを解説する入門書です。
+
+本書は、1章から6章、付録、前書き・後書きの計9セクションで構成されており、各章の内容を反映したビジュアル要素を表紙のデザインに採用しています。
+
+「VISUALIZE」 の9文字を各セクションに割り当て、文字輪郭上に、各章のキーワードをノードとし、章をまたぐ単語の共起関係をエッジとして表現したグラフを重ねることで、書籍全体の内容を視覚的に象徴するデザインとなっています。
+
+### デモ
 
 **[https://masakick.github.io/book-cover-viz-generator/](https://masakick.github.io/book-cover-viz-generator/)**
 
-## これは何か
+### 主な操作方法
 
-`VISUALIZE` の文字輪郭上にノードリンクグラフを重ねた表紙ビジュアルを、ブラウザ上でインタラクティブに生成するツールです。
+1. 各スライダーでノード数・エッジ数・色相・サイズなどを調整する
+2. 気に入ったバリエーションができたら **Download SVG** ボタンでSVGを保存する
 
-- **ノード** = 各章のキーワード（TF頻度に比例したサイズ、章ごとに色分け）
-- **エッジ** = 章をまたぐ単語の共起関係
-- スライダーでパラメータを調整し、SVG形式でダウンロードできます
-
-## 書籍
-
-本ツールは書籍『ProcessingとPythonではじめる データビジュアライゼーション入門』の表紙ビジュアル制作のために開発されました。
-
-著者: Masaki Yamabe  
-サポートサイト: [https://vizbook.masakiyamabe.com/](https://vizbook.masakiyamabe.com/)
-
-## 遊び方
-
-1. [デモページ](https://masakick.github.io/book-cover-viz-generator/)をブラウザで開く
-2. 各スライダーでノード数・エッジ数・色相・サイズなどを調整する
-3. 気に入ったバリエーションができたら **Download SVG** ボタンでSVGを保存する
-
-主なコントロール:
+### ビジュアルのコントロール
 
 | コントロール | 内容 |
 |---|---|
@@ -37,6 +29,7 @@
 | Edge Gradient | エッジに章ごとのグラデーションを適用するか |
 | Node Order | ノードをTFランク順 / 初出順で並べる |
 | Label Align | ラベルを中央揃え / 左揃えにする |
+
 
 ## 仕組み
 
@@ -66,11 +59,6 @@ python3 -m http.server 8000
 ## ライセンス
 
 MIT License — 詳細は [LICENSE](LICENSE) を参照。
-
-## クレジット
-
-本ツールは書籍プロジェクトの一部として開発されました。  
-原稿リポジトリ: [https://github.com/masakick/book-of-datavis-with-Processing](https://github.com/masakick/book-of-datavis-with-Processing)
 
 <details>
 <summary>データ更新・開発者向け情報</summary>

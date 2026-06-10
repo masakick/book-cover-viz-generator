@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>cover viz — interactive SVG generator</title>
+<title>Keyword Co-occurrence Network Visualizer</title>
 <style>
   :root {
     --bg: #1a1a1a;
@@ -110,6 +110,25 @@
     background: #2a1010;
     border-radius: 4px;
     margin-bottom: 12px;
+  }
+  #about-link {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    font-size: 11px;
+    color: var(--text);
+    text-decoration: none;
+    opacity: 0.8;
+    border: 1px solid var(--text);
+    border-radius: 4px;
+    padding: 3px 8px;
+    transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+    z-index: 10;
+  }
+  #about-link:hover {
+    opacity: 1;
+    color: var(--accent);
+    border-color: var(--accent);
   }
 </style>
 </head>
@@ -642,6 +661,8 @@ function bindControls() {
 bindControls();
 loadData();
 </script>
+
+<a id="about-link" href="https://github.com/masakick/book-cover-viz-generator" target="_blank" rel="noopener">About this site</a>
 
 </body>
 </html>
