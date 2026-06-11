@@ -131,6 +131,91 @@
     color: var(--accent);
     border-color: var(--accent);
   }
+  #about-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+  }
+  #about-overlay.open { display: flex; }
+  #about-modal {
+    position: relative;
+    background: var(--panel);
+    color: var(--text);
+    width: min(560px, calc(100vw - 40px));
+    height: min(500px, calc(100vh - 80px));
+    border: 1px solid #444;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  #about-tabs {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #444;
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+  .about-tab {
+    width: auto;
+    background: none;
+    border: none;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--text);
+    opacity: 0.6;
+    font-size: 12px;
+    font-weight: normal;
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+  .about-tab:hover { opacity: 1; }
+  .about-tab.active {
+    opacity: 1;
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  #about-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: auto;
+    font-weight: normal;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0.6;
+    padding: 6px 10px;
+  }
+  #about-close:hover { opacity: 1; }
+  .about-panel {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    padding: 16px 20px;
+    overflow-y: auto;
+  }
+  .about-panel.active { display: block; }
+  .about-panel a { color: var(--accent); }
+  .about-panel table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .about-panel th, .about-panel td {
+    border: 1px solid #444;
+    padding: 4px 8px;
+    text-align: left;
+    font-weight: normal;
+    font-size: 12px;
+  }
 </style>
 </head>
 <body>
@@ -697,7 +782,75 @@ bindControls();
 loadData();
 </script>
 
-<a id="about-link" href="https://github.com/masakick/book-cover-viz-generator" target="_blank" rel="noopener">About this site</a>
+<a id="about-link" href="#">About this site</a>
+
+<div id="about-overlay">
+  <div id="about-modal">
+    <div id="about-tabs">
+      <button class="about-tab active" data-tab="overview">概要</button>
+      <button class="about-tab" data-tab="howto">操作方法</button>
+      <button class="about-tab" data-tab="credit">クレジット</button>
+      <button id="about-close" title="閉じる">×</button>
+    </div>
+    <div class="about-panel active" id="about-panel-overview">
+      <p>本ツールは山辺真幸が執筆した書籍『ProcessingとPythonではじめる データビジュアライゼーション入門』の表紙ビジュアル制作のために開発されました。このページでさまざまなグラフィックをSVGとして生成でき、ソースコードはGitHubで公開しています。</p>
+      <p>本書は、1章から6章、付録、前書き・後書きの計9セクションで構成されており、各章の内容を反映したビジュアル要素を表紙のデザインに採用しています。</p>
+      <p>「VISUALIZE」 の9文字を各セクションに割り当て、文字輪郭上に、各章のキーワードをノードとし、章をまたぐ単語の共起関係をエッジとして表現したグラフを重ねることで、書籍全体の内容を視覚的に象徴するデザインとなっています。</p>
+      <p>
+        <a href="https://github.com/masakick/book-cover-viz-generator" target="_blank" rel="noopener">より詳しい説明（GitHubリポジトリ）</a><br>
+        <a href="https://www.amazon.co.jp/dp/4766431227" target="_blank" rel="noopener">Amazonで見る</a>
+      </p>
+    </div>
+    <div class="about-panel" id="about-panel-howto">
+      <ol style="padding-left: 1.4em; margin: 0 0 12px;">
+        <li>各スライダーでノード数・エッジ数・色相・サイズなどを調整する</li>
+        <li>ノードにマウスを重ねると、そのノードに接続されたエッジとノードだけがハイライトされ、該当する単語のラベルが表示される（共起関係をたどって探索できる）</li>
+        <li>気に入ったバリエーションができたら <strong>Download SVG</strong> ボタンでSVGを保存する</li>
+      </ol>
+      <table>
+        <tr><th>コントロール</th><th>内容</th></tr>
+        <tr><td>Dots / Chapter</td><td>章ごとに配置するノード数</td></tr>
+        <tr><td>Edge Count</td><td>表示するエッジ数</td></tr>
+        <tr><td>Node Hue / Saturation</td><td>ノードの色相・彩度</td></tr>
+        <tr><td>Edge Gradient</td><td>エッジに章ごとのグラデーションを適用するか</td></tr>
+        <tr><td>Node Order</td><td>ノードをTFランク順 / 初出順で並べる</td></tr>
+        <tr><td>Label Align</td><td>ラベルを中央揃え / 左揃えにする</td></tr>
+      </table>
+    </div>
+    <div class="about-panel" id="about-panel-credit">
+      <p>
+        開発：山辺真幸<br>
+        開発協力：桑原真一郎<br>
+        書籍カバーデザイン：中野豪雄
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const overlay = document.getElementById("about-overlay");
+  document.getElementById("about-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    overlay.classList.add("open");
+  });
+  document.getElementById("about-close").addEventListener("click", () => {
+    overlay.classList.remove("open");
+  });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.classList.remove("open");
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") overlay.classList.remove("open");
+  });
+  document.querySelectorAll(".about-tab[data-tab]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".about-tab[data-tab]").forEach(b => b.classList.toggle("active", b === btn));
+      document.querySelectorAll(".about-panel").forEach(p => p.classList.toggle("active", p.id === `about-panel-${btn.dataset.tab}`));
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
