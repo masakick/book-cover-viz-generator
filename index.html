@@ -2,7 +2,22 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Keyword Co-occurrence Network Visualizer</title>
+<meta name="description" content="書籍『ProcessingとPythonではじめる データビジュアライゼーション入門』の表紙ビジュアル生成ツール。章ごとのキーワードと共起関係をVISUALIZEの文字輪郭上にネットワークとして描き、SVGとしてダウンロードできます。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://masakick.github.io/book-cover-viz-generator/">
+<meta property="og:title" content="Keyword Co-occurrence Network Visualizer">
+<meta property="og:description" content="書籍『ProcessingとPythonではじめる データビジュアライゼーション入門』の表紙ビジュアル生成ツール。章ごとのキーワードと共起関係をVISUALIZEの文字輪郭上にネットワークとして描き、SVGとしてダウンロードできます。">
+<meta property="og:image" content="https://masakick.github.io/book-cover-viz-generator/screenshot.png">
+<meta property="og:image:width" content="1651">
+<meta property="og:image:height" content="939">
+<meta property="og:site_name" content="Keyword Co-occurrence Network Visualizer">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Keyword Co-occurrence Network Visualizer">
+<meta name="twitter:description" content="書籍『ProcessingとPythonではじめる データビジュアライゼーション入門』の表紙ビジュアル生成ツール。SVGとしてダウンロードできます。">
+<meta name="twitter:image" content="https://masakick.github.io/book-cover-viz-generator/screenshot.png">
 <style>
   :root {
     --bg: #1a1a1a;
@@ -22,13 +37,38 @@
     overflow: hidden;
   }
   #sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 320px;
-    flex-shrink: 0;
-    background: var(--panel);
+    height: 100%;
+    background: rgba(35, 35, 35, 0.85);
     overflow-y: auto;
     padding: 16px;
     border-right: 1px solid var(--border);
+    transition: transform 0.25s ease;
+    z-index: 12;
   }
+  body.drawer-closed #sidebar { transform: translateX(-100%); }
+  #drawer-toggle {
+    position: fixed;
+    top: 12px;
+    left: 320px;
+    width: auto;
+    padding: 16px 7px;
+    background: var(--panel);
+    color: #fff;
+    border: 1px solid var(--border);
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    font-size: 16px;
+    font-weight: normal;
+    opacity: 1;
+    transition: left 0.25s ease, opacity 0.15s, color 0.15s;
+    z-index: 13;
+  }
+  #drawer-toggle:hover { opacity: 1; color: var(--accent); }
+  body.drawer-closed #drawer-toggle { left: 0; }
   #preview {
     flex: 1;
     display: flex;
@@ -784,6 +824,8 @@ loadData();
 
 <a id="about-link" href="#">About this site</a>
 
+<button id="drawer-toggle" title="コントロールを開閉">◀</button>
+
 <div id="about-overlay">
   <div id="about-modal">
     <div id="about-tabs">
@@ -828,6 +870,14 @@ loadData();
 </div>
 
 <script>
+(function () {
+  const toggle = document.getElementById("drawer-toggle");
+  toggle.addEventListener("click", () => {
+    const closed = document.body.classList.toggle("drawer-closed");
+    toggle.textContent = closed ? "▶" : "◀";
+  });
+})();
+
 (function () {
   const overlay = document.getElementById("about-overlay");
   document.getElementById("about-link").addEventListener("click", (e) => {
